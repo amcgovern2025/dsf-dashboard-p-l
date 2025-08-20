@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dirigo Sea Farm Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background: #f9fafb; }
+    .slider-container { background: #f3f4f6; border: 1px solid #e5e7eb; }
+    .output-container { background: #fef3c7; border: 1px solid #fde68a; }
+    .config-container { background: #dbeafe; border: 1px solid #bfdbfe; }
+    .metric-card { background: white; border: 1px solid #e5e7eb; }
+    input[type="range"] { width: 100%; }
+    .tab-button { cursor: pointer; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; }
+    .tab-button.active { background: #2563eb; color: white; }
+    .tab-button:not(.active) { background: white; border: 1px solid #e5e7eb; }
+    .tab-button:not(.active):hover { background: #f3f4f6; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .help-text { font-size: 0.75rem; color: #6b7280; font-style: italic; }
+    .tooltip { position: relative; display: inline-block; cursor: help; }
+    .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+    .tooltiptext {
+      visibility: hidden;
+      width: 250px;
+      background-color: #1f2937;
+      color: #fff;
+      text-align: left;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 125%;
+      left: 50%;
+      margin-left: -125px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    .tooltiptext::after {
+      content: "";
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-left: -5px;
+      border-width: 5px;
+      border-style: solid;
+      border-color: #1f2937 transparent transparent transparent;
+    }
+  </style>
+</head>
+<body class="p-4 md:p-6">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="text-center bg-white rounded-lg shadow-sm p-6">
+      <h1 class="text-3xl font-bold text-gray-900">Dirigo Sea Farm Dashboard</h1>
+      <p class="text-gray-600 mt-2">Integrated Cost Modeling & Business Metrics</p>
+    </header>
+
+    <!-- Tab Navigation -->
+    <div class="flex flex-wrap gap-2 bg-white rounded-lg shadow-sm p-4">
+      <button class="tab-button active" onclick="switchTab('cogs')">COGs Analysis</button>
+      <button class="tab-button" onclick="switchTab('sales')">Sales & Revenue</button>
+      <button class="tab-button" onclick="switchTab('overview')">Business Overview</button>
+      <button class="tab-button" onclick="switchTab('config')">Configuration</button>
+    </div>
+
+    <!-- Tab 1: COGs Analysis -->
+    <div id="cogs-tab" class="tab-content active space-y-6">
+      
+      <!-- Production Input Sliders -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-bold mb-4">Production Inputs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              Seaweed Price ($/lb)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Raw kelp/seaweed purchase price per pound from suppliers</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>$<span id="seaweedPriceMin">4</span></span>
+              <span class="font-bold text-lg">$<span id="seaweedPriceValue">8.00</span></span>
+              <span>$<span id="seaweedPriceMax">15</span></span>
+            </div>
+            <input type="range" id="seaweedPrice" min="4" max="15" step="0.25" value="8" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              Alginate Yield (%)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Percentage of sodium alginate extracted from raw seaweed (typically 8-20%)</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span><span id="yieldMin">8</span>%</span>
+              <span class="font-bold text-lg"><span id="yieldValue">12</span>%</span>
+              <span><span id="yieldMax">20</span>%</span>
+            </div>
+            <input type="range" id="alginateYield" min="8" max="20" step="0.5" value="12" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              Ethanol Recovery (%)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Percentage of ethanol recovered and recycled in the extraction process, reducing costs</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>0%</span>
+              <span class="font-bold text-lg"><span id="ethanolValue">0</span>%</span>
+              <span>95%</span>
+            </div>
+            <input type="range" id="ethanolRecovery" min="0" max="95" step="5" value="0" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              Microalgae Grow Cost ($/lb)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Production cost per pound for microalgae cultivation (alternative feedstock)</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>$0.50</span>
+              <span class="font-bold text-lg">$<span id="microValue">1.00</span></span>
+              <span>$5.00</span>
+            </div>
+            <input type="range" id="microalgaeCost" min="0.5" max="5" step="0.1" value="1" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              % Macro in Blended Resin
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Percentage of macroalgae (seaweed-derived) vs microalgae in HoldFast resin blend</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>0%</span>
+              <span class="font-bold text-lg"><span id="macroBlendValue">20</span>%</span>
+              <span>100%</span>
+            </div>
+            <input type="range" id="macroBlend" min="0" max="100" step="5" value="20" class="mt-2">
+            <p class="text-xs text-gray-600 mt-1">Microalgae: <span id="microBlendValue">80</span>%</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- COGs Output Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <div class="output-container rounded-lg p-6">
+          <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
+            Sodium Alginate COG
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Cost = (Seaweed + Ethanol + Sodium Bicarb) / Alginate Yield. This is the base extracted alginate cost before further processing.</span>
+            </span>
+          </h3>
+          <p class="text-xs text-gray-600">Target: $<span id="alginateTargetDisplay">20</span>/lb</p>
+          <p class="text-3xl font-bold text-blue-600 mt-2">$<span id="alginateCOG">0.00</span>/lb</p>
+          <div class="mt-3 pt-3 border-t border-amber-300">
+            <p class="text-sm">Supply Needed: <span id="alginateSupply" class="font-semibold">0</span> lbs</p>
+            <p class="help-text mt-1">For current resin production volume</p>
+          </div>
+        </div>
+
+        <div class="output-container rounded-lg p-6">
+          <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
+            DirigoDrip Film COG
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Cost = (40% Alginate + 60% Glycerol + Processing). Film material cost without waste revenue offset.</span>
+            </span>
+          </h3>
+          <p class="text-xs text-gray-600">Target: $<span id="filmTargetDisplay">8</span>/lb</p>
+          <p class="text-3xl font-bold text-green-600 mt-2">$<span id="filmCOG">0.00</span>/lb</p>
+          <div id="filmTargetStatus" class="mt-2 text-sm font-semibold"></div>
+          <p class="help-text mt-2">Direct production cost per pound</p>
+        </div>
+
+        <div class="output-container rounded-lg p-6">
+          <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
+            HoldFast Resin COG
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Blended Cost = (% Macro × Alginate COG) + (% Micro × Microalgae Cost). Target includes 20% processing loss.</span>
+            </span>
+          </h3>
+          <p class="text-xs text-gray-600">Target: $<span id="resinTargetDisplay">2.75</span>/lb</p>
+          <p class="text-3xl font-bold text-purple-600 mt-2">$<span id="resinCOG">0.00</span>/lb</p>
+          <p class="text-sm text-gray-600 mt-2">Max input: $<span id="maxInputCOG">2.20</span>/lb</p>
+          <div id="resinTargetStatus" class="mt-2 text-sm font-semibold"></div>
+        </div>
+
+      </div>
+
+      <!-- Waste Stream Info -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h3 class="text-lg font-semibold mb-3">Biowaste Stream Analysis</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Waste Generated per Batch</p>
+            <p class="text-xl font-bold"><span id="wastePerBatch">0</span> lbs</p>
+            <p class="help-text mt-1">From 6 lbs seaweed input</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Waste Ratio</p>
+            <p class="text-xl font-bold"><span id="wasteRatio">0</span>%</p>
+            <p class="help-text mt-1">(1 - Alginate Yield)</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Total Annual Waste</p>
+            <p class="text-xl font-bold"><span id="totalWasteVolume">0</span> lbs</p>
+            <p class="help-text mt-1">Based on production volume</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tab 2: Sales & Revenue -->
+    <div id="sales-tab" class="tab-content space-y-6">
+      
+      <!-- Sales Volume & Pricing Sliders -->
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <h2 class="text-xl font-bold mb-4">Sales Inputs</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              DirigoDrip Film Sales (lbs)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Annual sales volume in pounds for DirigoDrip film products</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>0</span>
+              <span class="font-bold text-lg"><span id="filmVolumeValue">36,000</span></span>
+              <span>100k</span>
+            </div>
+            <input type="range" id="filmVolume" min="0" max="100000" step="1000" value="36000" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              DirigoDrip Sale Price ($/lb)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Market selling price per pound for DirigoDrip film</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>$5</span>
+              <span class="font-bold text-lg">$<span id="filmPriceValue">10.00</span></span>
+              <span>$20</span>
+            </div>
+            <input type="range" id="filmPrice" min="5" max="20" step="0.5" value="10" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              HoldFast Resin Sales (lbs)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Annual sales volume in pounds for HoldFast resin pellets</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>0</span>
+              <span class="font-bold text-lg"><span id="resinVolumeValue">900,000</span></span>
+              <span>2M</span>
+            </div>
+            <input type="range" id="resinVolume" min="0" max="2000000" step="10000" value="900000" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              HoldFast Sale Price ($/lb)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Market selling price per pound for HoldFast resin</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>$2</span>
+              <span class="font-bold text-lg">$<span id="resinPriceValue">2.75</span></span>
+              <span>$5</span>
+            </div>
+            <input type="range" id="resinPrice" min="2" max="5" step="0.05" value="2.75" class="mt-2">
+          </div>
+
+          <div class="slider-container p-4 rounded-lg">
+            <label class="font-semibold text-sm flex items-center gap-1">
+              Biowaste Sale Price ($/lb)
+              <span class="tooltip text-blue-500">ⓘ
+                <span class="tooltiptext">Revenue per pound from selling extraction waste as fertilizer/feed</span>
+              </span>
+            </label>
+            <div class="flex justify-between text-sm mt-1">
+              <span>$0</span>
+              <span class="font-bold text-lg">$<span id="wastePriceValue">7.50</span></span>
+              <span>$15</span>
+            </div>
+            <input type="range" id="wastePrice" min="0" max="15" step="0.5" value="7.5" class="mt-2">
+            <p class="help-text mt-1">Expected range: $5-$10/lb</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Revenue Output Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="output-container rounded-lg p-4">
+          <h4 class="text-sm font-semibold flex items-center gap-1">
+            DirigoDrip Revenue
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Film Volume × Film Price</span>
+            </span>
+          </h4>
+          <p class="text-2xl font-bold text-green-600 mt-1">$<span id="filmRevenue">0</span></p>
+          <p class="help-text mt-1">From film sales</p>
+        </div>
+
+        <div class="output-container rounded-lg p-4">
+          <h4 class="text-sm font-semibold flex items-center gap-1">
+            HoldFast Revenue
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Resin Volume × Resin Price</span>
+            </span>
+          </h4>
+          <p class="text-2xl font-bold text-purple-600 mt-1">$<span id="resinRevenue">0</span></p>
+          <p class="help-text mt-1">From resin sales</p>
+        </div>
+
+        <div class="output-container rounded-lg p-4">
+          <h4 class="text-sm font-semibold flex items-center gap-1">
+            Biowaste Revenue
+            <span class="tooltip text-amber-600">ⓘ
+              <span class="tooltiptext">Waste Volume × Waste Price. Additional revenue stream from byproducts.</span>
+            </span>
+          </h4>
+          <p class="text-2xl font-bold text-amber-600 mt-1">$<span id="wasteRevenue">0</span></p>
+          <p class="text-xs text-gray-600 mt-1">Volume: <span id="wasteVolume">0</span> lbs</p>
+        </div>
+
+        <div class="output-container rounded-lg p-4">
+          <h4 class="text-sm font-semibold">Total Revenue</h4>
+          <p class="text-2xl font-bold text-blue-700 mt-1">$<span id="totalRevenue">0</span></p>
+          <p class="help-text mt-1">All revenue streams</p>
+        </div>
+
+      </div>
+
+      <!-- Revenue Mix Breakdown -->
+      <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h3 class="text-lg font-semibold mb-3">Revenue Stream Breakdown</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Product Revenue</p>
+            <p class="text-xl font-bold">$<span id="productRevenue">0</span></p>
+            <p class="help-text mt-1">Film + Resin sales</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Waste Revenue %</p>
+            <p class="text-xl font-bold"><span id="wasteRevenuePercent">0</span>%</p>
+            <p class="help-text mt-1">Of total revenue</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Revenue per lb Input</p>
+            <p class="text-xl font-bold">$<span id="revenuePerInput">0.00</span></p>
+            <p class="help-text mt-1">Total revenue / seaweed input</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tab 3: Business Overview -->
+    <div id="overview-tab" class="tab-content space-y-6">
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        <!-- Annual Metrics -->
+        <div class="metric-card rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold mb-4">Annual Metrics</h3>
+          <div class="space-y-3">
+            <div class="flex justify-between items-center pb-2 border-b">
+              <span class="text-sm text-gray-600">Revenue</span>
+              <span class="font-bold text-lg">$<span id="annualRevenue">0</span></span>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b">
+              <span class="text-sm text-gray-600">COGS</span>
+              <span class="font-bold text-lg text-red-600">$<span id="annualCOGS">0</span></span>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b">
+              <span class="text-sm text-gray-600">Gross Profit</span>
+              <span class="font-bold text-lg text-green-600">$<span id="grossProfit">0</span></span>
+            </div>
+            <div class="flex justify-between items-center pb-2 border-b">
+              <span class="text-sm text-gray-600">OpEx</span>
+              <span class="font-bold text-lg text-amber-600">$<span id="annualOpEx">0</span></span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-sm text-gray-600">Net Income</span>
+              <span class="font-bold text-lg">$<span id="netIncome">0</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Margins & Efficiency -->
+        <div class="metric-card rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold mb-4 flex items-center gap-1">
+            Margins
+            <span class="tooltip text-gray-500">ⓘ
+              <span class="tooltiptext">Gross Margin = (Revenue - COGS) / Revenue. Product margins show profitability by product line.</span>
+            </span>
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm text-gray-600">Gross Margin</p>
+              <p class="text-2xl font-bold"><span id="grossMargin">0</span>%</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">DirigoDrip Margin</p>
+              <p class="text-xl font-semibold text-green-600"><span id="filmMargin">0</span>%</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">HoldFast Margin</p>
+              <p class="text-xl font-semibold text-purple-600"><span id="resinMargin">0</span>%</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash & Runway -->
+        <div class="metric-card rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold mb-4 flex items-center gap-1">
+            Cash Position
+            <span class="tooltip text-gray-500">ⓘ
+              <span class="tooltiptext">Monthly Burn = Net Loss / 12. Runway = Current Cash / Monthly Burn.</span>
+            </span>
+          </h3>
+          <div class="space-y-3">
+            <div>
+              <p class="text-sm text-gray-600">Monthly Burn</p>
+              <p class="text-2xl font-bold text-red-600">$<span id="monthlyBurn">0</span></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Current Cash</p>
+              <p class="text-xl font-semibold">$<span id="currentCash">3,787,448</span></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Runway</p>
+              <p class="text-xl font-semibold text-blue-600"><span id="runway">0</span> months</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold mb-4">Revenue Breakdown</h3>
+          <canvas id="revenueChart" height="200"></canvas>
+        </div>
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <h3 class="text-lg font-semibold mb-4">Cost Structure</h3>
+          <canvas id="costChart" height="200"></canvas>
+        </div>
+      </div>
+
+      <!-- Unit Economics -->
+      <div class="bg-white rounded-lg shadow-sm p-6 mt-6">
+        <h3 class="text-lg font-semibold mb-3">Unit Economics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Film Profit/lb</p>
+            <p class="text-xl font-bold">$<span id="filmProfitPerLb">0.00</span></p>
+            <p class="help-text mt-1">Price - COG</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Resin Profit/lb</p>
+            <p class="text-xl font-bold">$<span id="resinProfitPerLb">0.00</span></p>
+            <p class="help-text mt-1">Price - COG</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Breakeven Film Volume</p>
+            <p class="text-xl font-bold"><span id="filmBreakeven">0</span> lbs</p>
+            <p class="help-text mt-1">To cover OpEx</p>
+          </div>
+          <div class="metric-card p-4 rounded-lg">
+            <p class="text-sm text-gray-600">Breakeven Resin Volume</p>
+            <p class="text-xl font-bold"><span id="resinBreakeven">0</span> lbs</p>
+            <p class="help-text mt-1">To cover OpEx</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Tab 4: Configuration -->
+    <div id="config-tab" class="tab-content space-y-6">
+      
+      <div class="config-container rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-4">Configuration Settings</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Slider Ranges -->
+          <div>
+            <h3 class="font-semibold mb-3">Update Slider Ranges</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <label class="text-sm w-32">Seaweed Price:</label>
+                <input type="number" id="configSeaweedMin" value="4" class="w-20 px-2 py-1 border rounded" placeholder="Min">
+                <span>-</span>
+                <input type="number" id="configSeaweedMax" value="15" class="w-20 px-2 py-1 border rounded" placeholder="Max">
+                <span class="text-sm">$/lb</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm w-32">Alginate Yield:</label>
+                <input type="number" id="configYieldMin" value="8" class="w-20 px-2 py-1 border rounded" placeholder="Min">
+                <span>-</span>
+                <input type="number" id="configYieldMax" value="20" class="w-20 px-2 py-1 border rounded" placeholder="Max">
+                <span class="text-sm">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Target Prices -->
+          <div>
+            <h3 class="font-semibold mb-3">Update Targets</h3>
+            <div class="space-y-3">
+              <div class="flex items-center gap-2">
+                <label class="text-sm w-32">Alginate Target:</label>
+                <input type="number" id="configAlginateTarget" value="20" class="w-24 px-2 py-1 border rounded">
+                <span class="text-sm">$/lb</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm w-32">Film Target:</label>
+                <input type="number" id="configFilmTarget" value="8" class="w-24 px-2 py-1 border rounded">
+                <span class="text-sm">$/lb</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <label class="text-sm w-32">Resin Target:</label>
+                <input type="number" id="configResinTarget" value="2.75" step="0.01" class="w-24 px-2 py-1 border rounded">
+                <span class="text-sm">$/lb</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- OpEx Configuration -->
+        <div class="mt-6">
+          <h3 class="font-semibold mb-3">Update P&L Expenses (Annual)</h3>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-sm">R&D:</label>
+              <input type="number" id="configRnD" value="150000" class="w-32 px-2 py-1 border rounded">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm">SG&A:</label>
+              <input type="number" id="configSGA" value="200000" class="w-32 px-2 py-1 border rounded">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm">Other OpEx:</label>
+              <input type="number" id="configOther" value="88000" class="w-32 px-2 py-1 border rounded">
+            </div>
+          </div>
+        </div>
+
+        <!-- Additional Configuration -->
+        <div class="mt-6">
+          <h3 class="font-semibold mb-3">Additional Settings</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-sm">Current Cash Balance:</label>
+              <input type="number" id="configCash" value="3787448" class="w-32 px-2 py-1 border rounded">
+            </div>
+            <div class="flex items-center gap-2">
+              <label class="text-sm">Yield Loss %:</label>
+              <input type="number" id="configYieldLoss" value="20" class="w-20 px-2 py-1 border rounded">
+              <span class="text-sm">%</span>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="applyConfig()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+          Apply Configuration
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Global variables for charts
+    let revenueChart, costChart;
+    
+    // Configuration defaults
+    let config = {
+      alginateTarget: 20,
+      filmTarget: 8,
+      resinTarget: 2.75,
+      rndExpense: 150000,
+      sgaExpense: 200000,
+      otherExpense: 88000,
+      currentCash: 3787448,
+      yieldLoss: 20
+    };
+
+    // Constants for calculations
+    const ETHANOL_BASE_COST = 71.98;
+    const ETHANOL_USAGE = 0.462;
+    const SODIUM_BICARB_COST = 1.00;
+    const SODIUM_BICARB_USAGE = 1.98;
+    const GLYCEROL_COST = 1.03;
+    const GLYCEROL_USAGE_KG = 0.6;
+    const ALGINATE_USAGE_KG = 0.4;
+    const KG_TO_LB = 2.20462;
+    const SEAWEED_INPUT_BATCH = 6; // lbs per batch
+
+    function switchTab(tab) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      
+      // Show selected tab
+      document.getElementById(tab + '-tab').classList.add('active');
+      event.target.classList.add('active');
+      
+      // Update charts if overview tab
+      if (tab === 'overview') {
+        updateCharts();
+      }
+    }
+
+    function calculate() {
+      // Get input values
+      const seaweedPrice = parseFloat(document.getElementById('seaweedPrice').value);
+      const alginateYield = parseFloat(document.getElementById('alginateYield').value) / 100;
+      const ethanolRecovery = parseFloat(document.getElementById('ethanolRecovery').value) / 100;
+      const microalgaeCost = parseFloat(document.getElementById('microalgaeCost').value);
+      const macroBlend = parseFloat(document.getElementById('macroBlend').value) / 100;
+      const microBlend = 1 - macroBlend;
+      
+      const filmVolume = parseFloat(document.getElementById('filmVolume').value);
+      const filmPrice = parseFloat(document.getElementById('filmPrice').value);
+      const resinVolume = parseFloat(document.getElementById('resinVolume').value);
+      const resinSalePrice = parseFloat(document.getElementById('resinPrice').value);
+      const wastePrice = parseFloat(document.getElementById('wastePrice').value);
+
+      // Update display values
+      document.getElementById('seaweedPriceValue').textContent = seaweedPrice.toFixed(2);
+      document.getElementById('yieldValue').textContent = (alginateYield * 100).toFixed(1);
+      document.getElementById('ethanolValue').textContent = (ethanolRecovery * 100).toFixed(0);
+      document.getElementById('microValue').textContent = microalgaeCost.toFixed(2);
+      document.getElementById('macroBlendValue').textContent = (macroBlend * 100).toFixed(0);
+      document.getElementById('microBlendValue').textContent = (microBlend * 100).toFixed(0);
+      document.getElementById('filmVolumeValue').textContent = filmVolume.toLocaleString();
+      document.getElementById('filmPriceValue').textContent = filmPrice.toFixed(2);
+      document.getElementById('resinVolumeValue').textContent = resinVolume.toLocaleString();
+      document.getElementById('resinPriceValue').textContent = resinSalePrice.toFixed(2);
+      document.getElementById('wastePriceValue').textContent = wastePrice.toFixed(2);
+
+      // Update target displays
+      document.getElementById('alginateTargetDisplay').textContent = config.alginateTarget;
+      document.getElementById('filmTargetDisplay').textContent = config.filmTarget;
+      document.getElementById('resinTargetDisplay').textContent = config.resinTarget;
+
+      // Calculate Sodium Alginate COG
+      // Cost per lb = (Raw material + Processing costs) / Yield
+      const seaweedCost = seaweedPrice * SEAWEED_INPUT_BATCH; // Total seaweed cost for batch
+      const effectiveEthanolCost = ETHANOL_BASE_COST * ETHANOL_USAGE * (1 - ethanolRecovery);
+      const sodiumBicarbCost = SODIUM_BICARB_COST * SODIUM_BICARB_USAGE;
+      const totalProcessingCost = seaweedCost + effectiveEthanolCost + sodiumBicarbCost;
+      const alginateLbsPerBatch = SEAWEED_INPUT_BATCH * alginateYield;
+      const alginateCOG = totalProcessingCost / Math.max(alginateLbsPerBatch, 0.01);
+
+      // Calculate Film COG (WITHOUT waste credit - waste is separate revenue)
+      const alginateCostPerKg = alginateCOG * KG_TO_LB;
+      const filmMaterialCost = (GLYCEROL_COST * GLYCEROL_USAGE_KG) + (alginateCostPerKg * ALGINATE_USAGE_KG);
+      const filmCOG = filmMaterialCost / KG_TO_LB;
+
+      // Calculate Resin COG (blended)
+      const resinCOG = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
+
+      // Calculate waste volumes
+      const wastePerBatch = SEAWEED_INPUT_BATCH * (1 - alginateYield);
+      const wasteRatio = (1 - alginateYield) * 100;
+      
+      // Calculate supply needed for production
+      const alginateNeededForResin = resinVolume * macroBlend;
+      const seaweedNeededForResin = alginateNeededForResin / Math.max(alginateYield, 0.01);
+      const totalWasteFromResin = seaweedNeededForResin * (1 - alginateYield);
+      
+      // Add waste from film production
+      const alginateNeededForFilm = filmVolume * ALGINATE_USAGE_KG / KG_TO_LB;
+      const seaweedNeededForFilm = alginateNeededForFilm / Math.max(alginateYield, 0.01);
+      const totalWasteFromFilm = seaweedNeededForFilm * (1 - alginateYield);
+      
+      const totalWasteVolume = totalWasteFromResin + totalWasteFromFilm;
+      const totalSeaweedInput = seaweedNeededForResin + seaweedNeededForFilm;
+      
+      // Calculate revenues
+      const filmRevenue = filmVolume * filmPrice;
+      const resinRevenue = resinVolume * resinSalePrice;
+      const wasteRevenue = totalWasteVolume * wastePrice;
+      const totalRevenue = filmRevenue + resinRevenue + wasteRevenue;
+      const productRevenue = filmRevenue + resinRevenue;
+      const wasteRevenuePercent = totalRevenue > 0 ? (wasteRevenue / totalRevenue * 100) : 0;
+      const revenuePerInput = totalSeaweedInput > 0 ? (totalRevenue / totalSeaweedInput) : 0;
+
+      // Calculate COGS
+      const filmCOGS = filmVolume * filmCOG;
+      const resinCOGS = resinVolume * resinCOG;
+      const totalCOGS = filmCOGS + resinCOGS;
+
+      // Calculate margins
+      const grossProfit = totalRevenue - totalCOGS;
+      const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
+      const filmMargin = filmPrice > 0 ? ((filmPrice - filmCOG) / filmPrice * 100) : 0;
+      const resinMargin = resinSalePrice > 0 ? ((resinSalePrice - resinCOG) / resinSalePrice * 100) : 0;
+
+      // Calculate OpEx and Net Income
+      const totalOpEx = config.rndExpense + config.sgaExpense + config.otherExpense;
+      const netIncome = grossProfit - totalOpEx;
+      const monthlyBurn = netIncome < 0 ? Math.abs(netIncome / 12) : 0;
+      const runway = monthlyBurn > 0 ? (config.currentCash / monthlyBurn) : 999;
+
+      // Calculate unit economics
+      const filmProfitPerLb = filmPrice - filmCOG;
+      const resinProfitPerLb = resinSalePrice - resinCOG;
+      const filmBreakeven = filmProfitPerLb > 0 ? Math.ceil(totalOpEx / filmProfitPerLb) : 0;
+      const resinBreakeven = resinProfitPerLb > 0 ? Math.ceil(totalOpEx / resinProfitPerLb) : 0;
+
+      // Update COGs displays
+      document.getElementById('alginateCOG').textContent = alginateCOG.toFixed(2);
+      document.getElementById('alginateSupply').textContent = Math.round(alginateNeededForResin).toLocaleString();
+      document.getElementById('filmCOG').textContent = filmCOG.toFixed(2);
+      document.getElementById('resinCOG').textContent = resinCOG.toFixed(2);
+      document.getElementById('maxInputCOG').textContent = (config.resinTarget * (1 - config.yieldLoss/100)).toFixed(2);
+      
+      // Update waste analysis
+      document.getElementById('wastePerBatch').textContent = wastePerBatch.toFixed(2);
+      document.getElementById('wasteRatio').textContent = wasteRatio.toFixed(1);
+      document.getElementById('totalWasteVolume').textContent = Math.round(totalWasteVolume).toLocaleString();
+      
+      // Update target status indicators
+      const filmStatus = document.getElementById('filmTargetStatus');
+      if (filmCOG <= config.filmTarget) {
+        filmStatus.textContent = '✓ Meets target';
+        filmStatus.className = 'mt-2 text-sm font-semibold text-green-600';
+      } else {
+        filmStatus.textContent = '✗ Above target by 
+                 + (filmCOG - config.filmTarget).toFixed(2);
+        filmStatus.className = 'mt-2 text-sm font-semibold text-red-600';
+      }
+      
+      const resinStatus = document.getElementById('resinTargetStatus');
+      const maxInput = config.resinTarget * (1 - config.yieldLoss/100);
+      if (resinCOG <= maxInput) {
+        resinStatus.textContent = '✓ Meets target';
+        resinStatus.className = 'mt-2 text-sm font-semibold text-green-600';
+      } else {
+        resinStatus.textContent = '✗ Above target by 
+                 + (resinCOG - maxInput).toFixed(2);
+        resinStatus.className = 'mt-2 text-sm font-semibold text-red-600';
+      }
+      
+      // Update Sales tab displays
+      document.getElementById('filmRevenue').textContent = Math.round(filmRevenue).toLocaleString();
+      document.getElementById('resinRevenue').textContent = Math.round(resinRevenue).toLocaleString();
+      document.getElementById('wasteRevenue').textContent = Math.round(wasteRevenue).toLocaleString();
+      document.getElementById('wasteVolume').textContent = Math.round(totalWasteVolume).toLocaleString();
+      document.getElementById('totalRevenue').textContent = Math.round(totalRevenue).toLocaleString();
+      document.getElementById('productRevenue').textContent = Math.round(productRevenue).toLocaleString();
+      document.getElementById('wasteRevenuePercent').textContent = wasteRevenuePercent.toFixed(1);
+      document.getElementById('revenuePerInput').textContent = revenuePerInput.toFixed(2);
+      
+      // Update Overview tab displays
+      document.getElementById('annualRevenue').textContent = Math.round(totalRevenue).toLocaleString();
+      document.getElementById('annualCOGS').textContent = Math.round(totalCOGS).toLocaleString();
+      document.getElementById('grossProfit').textContent = Math.round(grossProfit).toLocaleString();
+      document.getElementById('annualOpEx').textContent = Math.round(totalOpEx).toLocaleString();
+      document.getElementById('netIncome').textContent = Math.round(netIncome).toLocaleString();
+      document.getElementById('grossMargin').textContent = grossMargin.toFixed(1);
+      document.getElementById('filmMargin').textContent = filmMargin.toFixed(1);
+      document.getElementById('resinMargin').textContent = resinMargin.toFixed(1);
+      document.getElementById('monthlyBurn').textContent = Math.round(monthlyBurn).toLocaleString();
+      document.getElementById('currentCash').textContent = config.currentCash.toLocaleString();
+      document.getElementById('runway').textContent = runway > 999 ? '∞' : runway.toFixed(1);
+      
+      // Update unit economics
+      document.getElementById('filmProfitPerLb').textContent = filmProfitPerLb.toFixed(2);
+      document.getElementById('resinProfitPerLb').textContent = resinProfitPerLb.toFixed(2);
+      document.getElementById('filmBreakeven').textContent = filmBreakeven.toLocaleString();
+      document.getElementById('resinBreakeven').textContent = resinBreakeven.toLocaleString();
+    }
+
+    function updateCharts() {
+      // Revenue Breakdown Chart
+      const revenueCtx = document.getElementById('revenueChart');
+      if (revenueCtx) {
+        const filmRevenue = parseFloat(document.getElementById('filmVolume').value) * parseFloat(document.getElementById('filmPrice').value);
+        const resinRevenue = parseFloat(document.getElementById('resinVolume').value) * parseFloat(document.getElementById('resinPrice').value);
+        const wasteRevenue = parseFloat(document.getElementById('wasteRevenue').textContent.replace(/,/g, ''));
+        
+        if (revenueChart) revenueChart.destroy();
+        
+        revenueChart = new Chart(revenueCtx, {
+          type: 'pie',
+          data: {
+            labels: ['DirigoDrip Film', 'HoldFast Resin', 'Biowaste'],
+            datasets: [{
+              data: [filmRevenue, resinRevenue, wasteRevenue],
+              backgroundColor: ['#10b981', '#8b5cf6', '#f59e0b'],
+              borderWidth: 2,
+              borderColor: '#fff'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom'
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    const label = context.label || '';
+                    const value = '
+                 + Math.round(context.raw).toLocaleString();
+                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = ((context.raw / total) * 100).toFixed(1) + '%';
+                    return label + ': ' + value + ' (' + percentage + ')';
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+      
+      // Cost Structure Chart
+      const costCtx = document.getElementById('costChart');
+      if (costCtx) {
+        const filmVolume = parseFloat(document.getElementById('filmVolume').value);
+        const resinVolume = parseFloat(document.getElementById('resinVolume').value);
+        const filmCOG = parseFloat(document.getElementById('filmCOG').textContent);
+        const resinCOG = parseFloat(document.getElementById('resinCOG').textContent);
+        const filmCOGS = filmVolume * filmCOG;
+        const resinCOGS = resinVolume * resinCOG;
+        
+        if (costChart) costChart.destroy();
+        
+        costChart = new Chart(costCtx, {
+          type: 'bar',
+          data: {
+            labels: ['Film COGS', 'Resin COGS', 'R&D', 'SG&A', 'Other OpEx'],
+            datasets: [{
+              label: 'Annual Costs',
+              data: [filmCOGS, resinCOGS, config.rndExpense, config.sgaExpense, config.otherExpense],
+              backgroundColor: ['#10b981', '#8b5cf6', '#3b82f6', '#f59e0b', '#ef4444']
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return '
+                 + Math.round(context.raw).toLocaleString();
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: function(value) {
+                    return '
+                 + (value / 1000) + 'k';
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    function applyConfig() {
+      // Update slider ranges
+      const seaweedMin = parseFloat(document.getElementById('configSeaweedMin').value);
+      const seaweedMax = parseFloat(document.getElementById('configSeaweedMax').value);
+      const yieldMin = parseFloat(document.getElementById('configYieldMin').value);
+      const yieldMax = parseFloat(document.getElementById('configYieldMax').value);
+      
+      document.getElementById('seaweedPrice').min = seaweedMin;
+      document.getElementById('seaweedPrice').max = seaweedMax;
+      document.getElementById('seaweedPriceMin').textContent = seaweedMin;
+      document.getElementById('seaweedPriceMax').textContent = seaweedMax;
+      
+      document.getElementById('alginateYield').min = yieldMin;
+      document.getElementById('alginateYield').max = yieldMax;
+      document.getElementById('yieldMin').textContent = yieldMin;
+      document.getElementById('yieldMax').textContent = yieldMax;
+      
+      // Update targets
+      config.alginateTarget = parseFloat(document.getElementById('configAlginateTarget').value);
+      config.filmTarget = parseFloat(document.getElementById('configFilmTarget').value);
+      config.resinTarget = parseFloat(document.getElementById('configResinTarget').value);
+      
+      // Update OpEx
+      config.rndExpense = parseFloat(document.getElementById('configRnD').value);
+      config.sgaExpense = parseFloat(document.getElementById('configSGA').value);
+      config.otherExpense = parseFloat(document.getElementById('configOther').value);
+      
+      // Update other settings
+      config.currentCash = parseFloat(document.getElementById('configCash').value);
+      config.yieldLoss = parseFloat(document.getElementById('configYieldLoss').value);
+      
+      // Recalculate with new config
+      calculate();
+      
+      alert('Configuration updated successfully!');
+    }
+
+    // Initialize on load
+    window.addEventListener('load', function() {
+      // Add event listeners to all sliders
+      const sliders = ['seaweedPrice', 'alginateYield', 'ethanolRecovery', 'microalgaeCost', 
+                      'macroBlend', 'filmVolume', 'filmPrice', 'resinVolume', 'resinPrice', 'wastePrice'];
+      
+      sliders.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculate);
+      });
+      
+      // Initial calculation
+      calculate();
+      updateCharts();
+    });
+  </script>
+</body>
+</html>
