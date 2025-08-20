@@ -63,10 +63,10 @@
 
     <!-- Tab Navigation -->
     <div class="flex flex-wrap gap-2 bg-white rounded-lg shadow-sm p-4">
-      <button class="tab-button active" onclick="switchTab('cogs')">COGs Analysis</button>
-      <button class="tab-button" onclick="switchTab('sales')">Sales & Revenue</button>
-      <button class="tab-button" onclick="switchTab('overview')">Business Overview</button>
-      <button class="tab-button" onclick="switchTab('config')">Configuration</button>
+      <button class="tab-button active" onclick="switchTab('cogs', this)">COGs Analysis</button>
+      <button class="tab-button" onclick="switchTab('sales', this)">Sales & Revenue</button>
+      <button class="tab-button" onclick="switchTab('overview', this)">Business Overview</button>
+      <button class="tab-button" onclick="switchTab('config', this)">Configuration</button>
     </div>
 
     <!-- Tab 1: COGs Analysis -->
@@ -628,14 +628,14 @@
     const KG_TO_LB = 2.20462;
     const SEAWEED_INPUT_BATCH = 6; // lbs per batch
 
-    function switchTab(tab) {
+    function switchTab(tab, button) {
       // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
       
       // Show selected tab
       document.getElementById(tab + '-tab').classList.add('active');
-      event.target.classList.add('active');
+      button.classList.add('active');
       
       // Update charts if overview tab
       if (tab === 'overview') {
@@ -677,7 +677,6 @@
       document.getElementById('resinTargetDisplay').textContent = config.resinTarget;
 
       // Calculate Sodium Alginate COG
-      // Cost per lb = (Raw material + Processing costs) / Yield
       const seaweedCost = seaweedPrice * SEAWEED_INPUT_BATCH; // Total seaweed cost for batch
       const effectiveEthanolCost = ETHANOL_BASE_COST * ETHANOL_USAGE * (1 - ethanolRecovery);
       const sodiumBicarbCost = SODIUM_BICARB_COST * SODIUM_BICARB_USAGE;
@@ -754,14 +753,13 @@
       document.getElementById('wasteRatio').textContent = wasteRatio.toFixed(1);
       document.getElementById('totalWasteVolume').textContent = Math.round(totalWasteVolume).toLocaleString();
       
-      // Update target status indicators
+      // Update target status indicators (FIXED concatenation)
       const filmStatus = document.getElementById('filmTargetStatus');
       if (filmCOG <= config.filmTarget) {
         filmStatus.textContent = '✓ Meets target';
         filmStatus.className = 'mt-2 text-sm font-semibold text-green-600';
       } else {
-        filmStatus.textContent = '✗ Above target by 
-                 + (filmCOG - config.filmTarget).toFixed(2);
+        filmStatus.textContent = '✗ Above target by ' + (filmCOG - config.filmTarget).toFixed(2);
         filmStatus.className = 'mt-2 text-sm font-semibold text-red-600';
       }
       
@@ -771,8 +769,7 @@
         resinStatus.textContent = '✓ Meets target';
         resinStatus.className = 'mt-2 text-sm font-semibold text-green-600';
       } else {
-        resinStatus.textContent = '✗ Above target by 
-                 + (resinCOG - maxInput).toFixed(2);
+        resinStatus.textContent = '✗ Above target by ' + (resinCOG - maxInput).toFixed(2);
         resinStatus.className = 'mt-2 text-sm font-semibold text-red-600';
       }
       
@@ -838,8 +835,7 @@
                 callbacks: {
                   label: function(context) {
                     const label = context.label || '';
-                    const value = '
-                 + Math.round(context.raw).toLocaleString();
+                    const value = Math.round(context.raw).toLocaleString();
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((context.raw / total) * 100).toFixed(1) + '%';
                     return label + ': ' + value + ' (' + percentage + ')';
@@ -883,8 +879,7 @@
               tooltip: {
                 callbacks: {
                   label: function(context) {
-                    return '
-                 + Math.round(context.raw).toLocaleString();
+                    return Math.round(context.raw).toLocaleString();
                   }
                 }
               }
@@ -894,8 +889,7 @@
                 beginAtZero: true,
                 ticks: {
                   callback: function(value) {
-                    return '
-                 + (value / 1000) + 'k';
+                    return (value / 1000) + 'k';
                   }
                 }
               }
