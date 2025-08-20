@@ -169,8 +169,8 @@
           <p class="text-xs text-gray-600">Target: $<span id="alginateTargetDisplay">20</span>/lb</p>
           <p class="text-3xl font-bold text-blue-600 mt-2">$<span id="alginateCOG">0.00</span>/lb</p>
           <div class="mt-3 pt-3 border-t border-amber-300">
-            <p class="text-sm">Supply Needed: <span id="alginateSupply" class="font-semibold">0</span> lbs</p>
-            <p class="help-text mt-1">For current resin production volume</p>
+            <p class="text-sm">Seaweed Volume Needed (Dry): <span id="alginateSupply" class="font-semibold">0</span> lbs</p>
+            <p class="help-text mt-1">Derived from film + resin alginate needs and yield</p>
           </div>
         </div>
 
@@ -624,27 +624,20 @@
     const SODIUM_BICARB_USAGE = 1.98;
     const GLYCEROL_COST = 1.03;
     const GLYCEROL_USAGE_KG = 0.6;
-    const ALGINATE_USAGE_KG = 0.4;
+    const ALGINATE_USAGE_KG = 0.4; // still used for film COG, not for seaweed calc
     const KG_TO_LB = 2.20462;
     const SEAWEED_INPUT_BATCH = 6; // lbs per batch
 
     function switchTab(tab, button) {
-      // Hide all tabs
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
       document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-      
-      // Show selected tab
       document.getElementById(tab + '-tab').classList.add('active');
       button.classList.add('active');
-      
-      // Update charts if overview tab
-      if (tab === 'overview') {
-        updateCharts();
-      }
+      if (tab === 'overview') updateCharts();
     }
 
     function calculate() {
-      // Get input values
+      // Inputs
       const seaweedPrice = parseFloat(document.getElementById('seaweedPrice').value);
       const alginateYield = parseFloat(document.getElementById('alginateYield').value) / 100;
       const ethanolRecovery = parseFloat(document.getElementById('ethanolRecovery').value) / 100;
@@ -652,13 +645,13 @@
       const macroBlend = parseFloat(document.getElementById('macroBlend').value) / 100;
       const microBlend = 1 - macroBlend;
       
-      const filmVolume = parseFloat(document.getElementById('filmVolume').value);
+      const filmVolume = parseFloat(document.getElementById('filmVolume').value);    // lbs
       const filmPrice = parseFloat(document.getElementById('filmPrice').value);
-      const resinVolume = parseFloat(document.getElementById('resinVolume').value);
+      const resinVolume = parseFloat(document.getElementById('resinVolume').value);  // lbs
       const resinSalePrice = parseFloat(document.getElementById('resinPrice').value);
       const wastePrice = parseFloat(document.getElementById('wastePrice').value);
 
-      // Update display values
+      // Update UI numbers
       document.getElementById('seaweedPriceValue').textContent = seaweedPrice.toFixed(2);
       document.getElementById('yieldValue').textContent = (alginateYield * 100).toFixed(1);
       document.getElementById('ethanolValue').textContent = (ethanolRecovery * 100).toFixed(0);
@@ -671,45 +664,46 @@
       document.getElementById('resinPriceValue').textContent = resinSalePrice.toFixed(2);
       document.getElementById('wastePriceValue').textContent = wastePrice.toFixed(2);
 
-      // Update target displays
+      // Targets display
       document.getElementById('alginateTargetDisplay').textContent = config.alginateTarget;
       document.getElementById('filmTargetDisplay').textContent = config.filmTarget;
       document.getElementById('resinTargetDisplay').textContent = config.resinTarget;
 
-      // Calculate Sodium Alginate COG
-      const seaweedCost = seaweedPrice * SEAWEED_INPUT_BATCH; // Total seaweed cost for batch
+      // Alginate COG (per lb alginate)
+      const seaweedCost = seaweedPrice * SEAWEED_INPUT_BATCH;
       const effectiveEthanolCost = ETHANOL_BASE_COST * ETHANOL_USAGE * (1 - ethanolRecovery);
       const sodiumBicarbCost = SODIUM_BICARB_COST * SODIUM_BICARB_USAGE;
       const totalProcessingCost = seaweedCost + effectiveEthanolCost + sodiumBicarbCost;
       const alginateLbsPerBatch = SEAWEED_INPUT_BATCH * alginateYield;
       const alginateCOG = totalProcessingCost / Math.max(alginateLbsPerBatch, 0.01);
 
-      // Calculate Film COG (WITHOUT waste credit - waste is separate revenue)
+      // Film COG (uses kg recipe parts, then convert back to lb)
       const alginateCostPerKg = alginateCOG * KG_TO_LB;
       const filmMaterialCost = (GLYCEROL_COST * GLYCEROL_USAGE_KG) + (alginateCostPerKg * ALGINATE_USAGE_KG);
       const filmCOG = filmMaterialCost / KG_TO_LB;
 
-      // Calculate Resin COG (blended)
+      // Resin COG (blend)
       const resinCOG = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
 
-      // Calculate waste volumes
+      // --- P&L-style seaweed requirement ---
+      // Film alginate requirement = 40% of film weight (lbs)
+      const alginateNeededForFilm = filmVolume * 0.40;
+      // Resin alginate requirement = macro portion of resin (lbs)
+      const alginateNeededForResin = resinVolume * macroBlend;
+      // Total alginate needed (lbs)
+      const totalAlginateNeeded = alginateNeededForFilm + alginateNeededForResin;
+      // Dry seaweed required (lbs) given yield
+      const seaweedVolumeNeeded = totalAlginateNeeded / Math.max(alginateYield, 0.01);
+
+      // Waste & inputs (derived for other metrics)
       const wastePerBatch = SEAWEED_INPUT_BATCH * (1 - alginateYield);
       const wasteRatio = (1 - alginateYield) * 100;
-      
-      // Calculate supply needed for production
-      const alginateNeededForResin = resinVolume * macroBlend;
-      const seaweedNeededForResin = alginateNeededForResin / Math.max(alginateYield, 0.01);
-      const totalWasteFromResin = seaweedNeededForResin * (1 - alginateYield);
-      
-      // Add waste from film production
-      const alginateNeededForFilm = filmVolume * ALGINATE_USAGE_KG / KG_TO_LB;
-      const seaweedNeededForFilm = alginateNeededForFilm / Math.max(alginateYield, 0.01);
-      const totalWasteFromFilm = seaweedNeededForFilm * (1 - alginateYield);
-      
-      const totalWasteVolume = totalWasteFromResin + totalWasteFromFilm;
-      const totalSeaweedInput = seaweedNeededForResin + seaweedNeededForFilm;
-      
-      // Calculate revenues
+
+      // If we converted seaweedVolumeNeeded into seaweed input for both film/resin:
+      const totalSeaweedInput = seaweedVolumeNeeded; // already includes both streams
+      const totalWasteVolume = totalSeaweedInput * (1 - alginateYield);
+
+      // Revenues
       const filmRevenue = filmVolume * filmPrice;
       const resinRevenue = resinVolume * resinSalePrice;
       const wasteRevenue = totalWasteVolume * wastePrice;
@@ -718,24 +712,24 @@
       const wasteRevenuePercent = totalRevenue > 0 ? (wasteRevenue / totalRevenue * 100) : 0;
       const revenuePerInput = totalSeaweedInput > 0 ? (totalRevenue / totalSeaweedInput) : 0;
 
-      // Calculate COGS
+      // COGS
       const filmCOGS = filmVolume * filmCOG;
       const resinCOGS = resinVolume * resinCOG;
       const totalCOGS = filmCOGS + resinCOGS;
 
-      // Calculate margins
+      // Margins
       const grossProfit = totalRevenue - totalCOGS;
       const grossMargin = totalRevenue > 0 ? (grossProfit / totalRevenue * 100) : 0;
       const filmMargin = filmPrice > 0 ? ((filmPrice - filmCOG) / filmPrice * 100) : 0;
       const resinMargin = resinSalePrice > 0 ? ((resinSalePrice - resinCOG) / resinSalePrice * 100) : 0;
 
-      // Calculate OpEx and Net Income
+      // OpEx & Net
       const totalOpEx = config.rndExpense + config.sgaExpense + config.otherExpense;
       const netIncome = grossProfit - totalOpEx;
       const monthlyBurn = netIncome < 0 ? Math.abs(netIncome / 12) : 0;
       const runway = monthlyBurn > 0 ? (config.currentCash / monthlyBurn) : 999;
 
-      // Calculate unit economics
+      // Unit economics
       const filmProfitPerLb = filmPrice - filmCOG;
       const resinProfitPerLb = resinSalePrice - resinCOG;
       const filmBreakeven = filmProfitPerLb > 0 ? Math.ceil(totalOpEx / filmProfitPerLb) : 0;
@@ -743,17 +737,17 @@
 
       // Update COGs displays
       document.getElementById('alginateCOG').textContent = alginateCOG.toFixed(2);
-      document.getElementById('alginateSupply').textContent = Math.round(alginateNeededForResin).toLocaleString();
+      document.getElementById('alginateSupply').textContent = Math.round(seaweedVolumeNeeded).toLocaleString();
       document.getElementById('filmCOG').textContent = filmCOG.toFixed(2);
       document.getElementById('resinCOG').textContent = resinCOG.toFixed(2);
       document.getElementById('maxInputCOG').textContent = (config.resinTarget * (1 - config.yieldLoss/100)).toFixed(2);
       
-      // Update waste analysis
+      // Waste analysis
       document.getElementById('wastePerBatch').textContent = wastePerBatch.toFixed(2);
       document.getElementById('wasteRatio').textContent = wasteRatio.toFixed(1);
       document.getElementById('totalWasteVolume').textContent = Math.round(totalWasteVolume).toLocaleString();
       
-      // Update target status indicators (FIXED concatenation)
+      // Targets status
       const filmStatus = document.getElementById('filmTargetStatus');
       if (filmCOG <= config.filmTarget) {
         filmStatus.textContent = '✓ Meets target';
@@ -773,7 +767,7 @@
         resinStatus.className = 'mt-2 text-sm font-semibold text-red-600';
       }
       
-      // Update Sales tab displays
+      // Sales tab
       document.getElementById('filmRevenue').textContent = Math.round(filmRevenue).toLocaleString();
       document.getElementById('resinRevenue').textContent = Math.round(resinRevenue).toLocaleString();
       document.getElementById('wasteRevenue').textContent = Math.round(wasteRevenue).toLocaleString();
@@ -783,7 +777,7 @@
       document.getElementById('wasteRevenuePercent').textContent = wasteRevenuePercent.toFixed(1);
       document.getElementById('revenuePerInput').textContent = revenuePerInput.toFixed(2);
       
-      // Update Overview tab displays
+      // Overview tab
       document.getElementById('annualRevenue').textContent = Math.round(totalRevenue).toLocaleString();
       document.getElementById('annualCOGS').textContent = Math.round(totalCOGS).toLocaleString();
       document.getElementById('grossProfit').textContent = Math.round(grossProfit).toLocaleString();
@@ -796,7 +790,7 @@
       document.getElementById('currentCash').textContent = config.currentCash.toLocaleString();
       document.getElementById('runway').textContent = runway > 999 ? '∞' : runway.toFixed(1);
       
-      // Update unit economics
+      // Unit economics
       document.getElementById('filmProfitPerLb').textContent = filmProfitPerLb.toFixed(2);
       document.getElementById('resinProfitPerLb').textContent = resinProfitPerLb.toFixed(2);
       document.getElementById('filmBreakeven').textContent = filmBreakeven.toLocaleString();
@@ -873,9 +867,7 @@
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-              legend: {
-                display: false
-              },
+              legend: { display: false },
               tooltip: {
                 callbacks: {
                   label: function(context) {
@@ -930,23 +922,16 @@
       config.currentCash = parseFloat(document.getElementById('configCash').value);
       config.yieldLoss = parseFloat(document.getElementById('configYieldLoss').value);
       
-      // Recalculate with new config
+      // Recalculate
       calculate();
-      
       alert('Configuration updated successfully!');
     }
 
     // Initialize on load
     window.addEventListener('load', function() {
-      // Add event listeners to all sliders
-      const sliders = ['seaweedPrice', 'alginateYield', 'ethanolRecovery', 'microalgaeCost', 
-                      'macroBlend', 'filmVolume', 'filmPrice', 'resinVolume', 'resinPrice', 'wastePrice'];
-      
-      sliders.forEach(id => {
-        document.getElementById(id).addEventListener('input', calculate);
-      });
-      
-      // Initial calculation
+      const sliders = ['seaweedPrice','alginateYield','ethanolRecovery','microalgaeCost',
+                       'macroBlend','filmVolume','filmPrice','resinVolume','resinPrice','wastePrice'];
+      sliders.forEach(id => document.getElementById(id).addEventListener('input', calculate));
       calculate();
       updateCharts();
     });
