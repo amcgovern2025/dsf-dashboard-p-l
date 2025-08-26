@@ -80,7 +80,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               Seaweed Price ($/lb)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Raw kelp/seaweed purchase price per pound from suppliers</span>
               </span>
             </label>
@@ -95,7 +95,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               Alginate Yield (%)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Percentage of sodium alginate extracted from raw seaweed (typically 8-20%)</span>
               </span>
             </label>
@@ -110,7 +110,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               Ethanol Recovery (%)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Percentage of ethanol recovered and recycled in the extraction process, reducing costs</span>
               </span>
             </label>
@@ -124,9 +124,9 @@
 
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
-              Microalgae Grow Cost ($/lb)
-              <span class="tooltip text-blue-500">ⓘ
-                <span class="tooltiptext">Production cost per pound for microalgae cultivation (alternative feedstock)</span>
+              Microalgae Alginate Cost ($/lb)
+              <span class="tooltip text-blue-500">ℹ
+                <span class="tooltiptext">Cost per pound for microalgae-derived alginate (alternative alginate source)</span>
               </span>
             </label>
             <div class="flex justify-between text-sm mt-1">
@@ -139,9 +139,9 @@
 
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
-              % Macro in Blended Resin
-              <span class="tooltip text-blue-500">ⓘ
-                <span class="tooltiptext">Percentage of macroalgae (seaweed-derived) vs microalgae in HoldFast resin blend</span>
+              % Macro Alginate in Resin
+              <span class="tooltip text-blue-500">ℹ
+                <span class="tooltiptext">Percentage of macroalgae-derived alginate vs microalgae-derived alginate in the 40% alginate portion of HoldFast resin</span>
               </span>
             </label>
             <div class="flex justify-between text-sm mt-1">
@@ -150,7 +150,7 @@
               <span>100%</span>
             </div>
             <input type="range" id="macroBlend" min="0" max="100" step="5" value="20" class="mt-2">
-            <p class="text-xs text-gray-600 mt-1">Microalgae: <span id="microBlendValue">80</span>%</p>
+            <p class="text-xs text-gray-600 mt-1">Micro alginate: <span id="microBlendValue">80</span>%</p>
           </div>
 
         </div>
@@ -162,7 +162,7 @@
         <div class="output-container rounded-lg p-6">
           <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
             Sodium Alginate COG
-            <span class="tooltip text-amber-600">ⓘ
+            <span class="tooltip text-amber-600">ℹ
               <span class="tooltiptext">Cost = (Seaweed + Ethanol + Sodium Bicarb) / Alginate Yield. This is the base extracted alginate cost before further processing.</span>
             </span>
           </h3>
@@ -177,7 +177,7 @@
         <div class="output-container rounded-lg p-6">
           <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
             DirigoDrip Film COG
-            <span class="tooltip text-amber-600">ⓘ
+            <span class="tooltip text-amber-600">ℹ
               <span class="tooltiptext">Cost = (40% Alginate + 60% Glycerol + Processing). Film material cost without waste revenue offset.</span>
             </span>
           </h3>
@@ -190,14 +190,18 @@
         <div class="output-container rounded-lg p-6">
           <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
             HoldFast Resin COG
-            <span class="tooltip text-amber-600">ⓘ
-              <span class="tooltiptext">Blended Cost = (% Macro × Alginate COG) + (% Micro × Microalgae Cost). Target includes 20% processing loss.</span>
+            <span class="tooltip text-amber-600">ℹ
+              <span class="tooltiptext">Cost = 40% Alginate (blend of macro/micro sources) + 60% Glycerol. Target includes 20% processing loss.</span>
             </span>
           </h3>
           <p class="text-xs text-gray-600">Target: $<span id="resinTargetDisplay">2.75</span>/lb</p>
           <p class="text-3xl font-bold text-purple-600 mt-2">$<span id="resinCOG">0.00</span>/lb</p>
           <p class="text-sm text-gray-600 mt-2">Max input: $<span id="maxInputCOG">2.20</span>/lb</p>
           <div id="resinTargetStatus" class="mt-2 text-sm font-semibold"></div>
+          <div class="mt-3 pt-3 border-t border-amber-300">
+            <p class="text-xs text-gray-600">Alginate blend cost: $<span id="alginateBlendCost">0.00</span>/lb</p>
+            <p class="text-xs text-gray-600">Composition: 40% alginate, 60% glycerol</p>
+          </div>
         </div>
 
       </div>
@@ -237,7 +241,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               DirigoDrip Film Sales (lbs)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Annual sales volume in pounds for DirigoDrip film products</span>
               </span>
             </label>
@@ -252,7 +256,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               DirigoDrip Sale Price ($/lb)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Market selling price per pound for DirigoDrip film</span>
               </span>
             </label>
@@ -267,7 +271,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               HoldFast Resin Sales (lbs)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Annual sales volume in pounds for HoldFast resin pellets</span>
               </span>
             </label>
@@ -282,7 +286,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               HoldFast Sale Price ($/lb)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Market selling price per pound for HoldFast resin</span>
               </span>
             </label>
@@ -297,7 +301,7 @@
           <div class="slider-container p-4 rounded-lg">
             <label class="font-semibold text-sm flex items-center gap-1">
               Biowaste Sale Price ($/lb)
-              <span class="tooltip text-blue-500">ⓘ
+              <span class="tooltip text-blue-500">ℹ
                 <span class="tooltiptext">Revenue per pound from selling extraction waste as fertilizer/feed</span>
               </span>
             </label>
@@ -319,7 +323,7 @@
         <div class="output-container rounded-lg p-4">
           <h4 class="text-sm font-semibold flex items-center gap-1">
             DirigoDrip Revenue
-            <span class="tooltip text-amber-600">ⓘ
+            <span class="tooltip text-amber-600">ℹ
               <span class="tooltiptext">Film Volume × Film Price</span>
             </span>
           </h4>
@@ -330,7 +334,7 @@
         <div class="output-container rounded-lg p-4">
           <h4 class="text-sm font-semibold flex items-center gap-1">
             HoldFast Revenue
-            <span class="tooltip text-amber-600">ⓘ
+            <span class="tooltip text-amber-600">ℹ
               <span class="tooltiptext">Resin Volume × Resin Price</span>
             </span>
           </h4>
@@ -341,7 +345,7 @@
         <div class="output-container rounded-lg p-4">
           <h4 class="text-sm font-semibold flex items-center gap-1">
             Biowaste Revenue
-            <span class="tooltip text-amber-600">ⓘ
+            <span class="tooltip text-amber-600">ℹ
               <span class="tooltiptext">Waste Volume × Waste Price. Additional revenue stream from byproducts.</span>
             </span>
           </h4>
@@ -417,7 +421,7 @@
         <div class="metric-card rounded-lg shadow-sm p-6">
           <h3 class="text-lg font-semibold mb-4 flex items-center gap-1">
             Margins
-            <span class="tooltip text-gray-500">ⓘ
+            <span class="tooltip text-gray-500">ℹ
               <span class="tooltiptext">Gross Margin = (Revenue - COGS) / Revenue. Product margins show profitability by product line.</span>
             </span>
           </h3>
@@ -441,7 +445,7 @@
         <div class="metric-card rounded-lg shadow-sm p-6">
           <h3 class="text-lg font-semibold mb-4 flex items-center gap-1">
             Cash Position
-            <span class="tooltip text-gray-500">ⓘ
+            <span class="tooltip text-gray-500">ℹ
               <span class="tooltiptext">Monthly Burn = Net Loss / 12. Runway = Current Cash / Monthly Burn.</span>
             </span>
           </h3>
@@ -624,9 +628,12 @@
     const SODIUM_BICARB_USAGE = 1.98;
     const GLYCEROL_COST = 1.03;
     const GLYCEROL_USAGE_KG = 0.6;
-    const ALGINATE_USAGE_KG = 0.4; // still used for film COG, not for seaweed calc
+    const ALGINATE_USAGE_KG = 0.4;
     const KG_TO_LB = 2.20462;
     const SEAWEED_INPUT_BATCH = 6; // lbs per batch
+    // Updated: HoldFast Resin composition constants
+    const RESIN_ALGINATE_PERCENT = 0.4; // 40% alginate
+    const RESIN_GLYCEROL_PERCENT = 0.6; // 60% glycerol
 
     function switchTab(tab, button) {
       document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -669,7 +676,7 @@
       document.getElementById('filmTargetDisplay').textContent = config.filmTarget;
       document.getElementById('resinTargetDisplay').textContent = config.resinTarget;
 
-      // Alginate COG (per lb alginate)
+      // Alginate COG (per lb alginate from macroalgae)
       const seaweedCost = seaweedPrice * SEAWEED_INPUT_BATCH;
       const effectiveEthanolCost = ETHANOL_BASE_COST * ETHANOL_USAGE * (1 - ethanolRecovery);
       const sodiumBicarbCost = SODIUM_BICARB_COST * SODIUM_BICARB_USAGE;
@@ -682,25 +689,27 @@
       const filmMaterialCost = (GLYCEROL_COST * GLYCEROL_USAGE_KG) + (alginateCostPerKg * ALGINATE_USAGE_KG);
       const filmCOG = filmMaterialCost / KG_TO_LB;
 
-      // Resin COG (blend)
-      const resinCOG = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
+      // UPDATED: HoldFast Resin COG calculation
+      // Resin = 40% alginate (blend of macro/micro sources) + 60% glycerol
+      // Alginate blend cost = weighted average of macro and micro alginate costs
+      const alginateBlendCost = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
+      // Total resin cost = 40% alginate blend + 60% glycerol
+      const resinCOG = (RESIN_ALGINATE_PERCENT * alginateBlendCost) + (RESIN_GLYCEROL_PERCENT * GLYCEROL_COST);
 
-      // --- P&L-style seaweed requirement ---
-      // Film alginate requirement = 40% of film weight (lbs)
+      // P&L-style seaweed requirement calculations
+      // Film alginate requirement = 40% of film weight (lbs) - only from macroalgae
       const alginateNeededForFilm = filmVolume * 0.40;
-      // Resin alginate requirement = macro portion of resin (lbs)
-      const alginateNeededForResin = resinVolume * macroBlend;
-      // Total alginate needed (lbs)
+      // Resin alginate requirement = 40% of resin weight * macro percentage (lbs)
+      const alginateNeededForResin = resinVolume * RESIN_ALGINATE_PERCENT * macroBlend;
+      // Total alginate needed from macroalgae (lbs)
       const totalAlginateNeeded = alginateNeededForFilm + alginateNeededForResin;
       // Dry seaweed required (lbs) given yield
       const seaweedVolumeNeeded = totalAlginateNeeded / Math.max(alginateYield, 0.01);
 
-      // Waste & inputs (derived for other metrics)
+      // Waste & inputs
       const wastePerBatch = SEAWEED_INPUT_BATCH * (1 - alginateYield);
       const wasteRatio = (1 - alginateYield) * 100;
-
-      // If we converted seaweedVolumeNeeded into seaweed input for both film/resin:
-      const totalSeaweedInput = seaweedVolumeNeeded; // already includes both streams
+      const totalSeaweedInput = seaweedVolumeNeeded;
       const totalWasteVolume = totalSeaweedInput * (1 - alginateYield);
 
       // Revenues
@@ -741,6 +750,7 @@
       document.getElementById('filmCOG').textContent = filmCOG.toFixed(2);
       document.getElementById('resinCOG').textContent = resinCOG.toFixed(2);
       document.getElementById('maxInputCOG').textContent = (config.resinTarget * (1 - config.yieldLoss/100)).toFixed(2);
+      document.getElementById('alginateBlendCost').textContent = alginateBlendCost.toFixed(2);
       
       // Waste analysis
       document.getElementById('wastePerBatch').textContent = wastePerBatch.toFixed(2);
@@ -753,7 +763,7 @@
         filmStatus.textContent = '✓ Meets target';
         filmStatus.className = 'mt-2 text-sm font-semibold text-green-600';
       } else {
-        filmStatus.textContent = '✗ Above target by ' + (filmCOG - config.filmTarget).toFixed(2);
+        filmStatus.textContent = '✗ Above target by  + (filmCOG - config.filmTarget).toFixed(2);
         filmStatus.className = 'mt-2 text-sm font-semibold text-red-600';
       }
       
@@ -763,7 +773,7 @@
         resinStatus.textContent = '✓ Meets target';
         resinStatus.className = 'mt-2 text-sm font-semibold text-green-600';
       } else {
-        resinStatus.textContent = '✗ Above target by ' + (resinCOG - maxInput).toFixed(2);
+        resinStatus.textContent = '✗ Above target by  + (resinCOG - maxInput).toFixed(2);
         resinStatus.className = 'mt-2 text-sm font-semibold text-red-600';
       }
       
@@ -832,7 +842,7 @@
                     const value = Math.round(context.raw).toLocaleString();
                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                     const percentage = ((context.raw / total) * 100).toFixed(1) + '%';
-                    return label + ': ' + value + ' (' + percentage + ')';
+                    return label + ':  + value + ' (' + percentage + ')';
                   }
                 }
               }
@@ -871,7 +881,7 @@
               tooltip: {
                 callbacks: {
                   label: function(context) {
-                    return Math.round(context.raw).toLocaleString();
+                    return ' + Math.round(context.raw).toLocaleString();
                   }
                 }
               }
@@ -881,7 +891,7 @@
                 beginAtZero: true,
                 ticks: {
                   callback: function(value) {
-                    return (value / 1000) + 'k';
+                    return ' + (value / 1000) + 'k';
                   }
                 }
               }
