@@ -191,7 +191,7 @@
           <h3 class="text-lg font-semibold mb-2 flex items-center gap-1">
             HoldFast Resin COG
             <span class="tooltip text-amber-600">ⓘ
-              <span class="tooltiptext">Blended Cost = (% Macro × Alginate COG) + (% Micro × Microalgae Cost). Target includes 20% processing loss.</span>
+              <span class="tooltiptext">Cost = 60% Glycerin + 40% Blended Input. Blended Input = (% Macro × Alginate COG) + (% Micro × Microalgae Cost). Target includes 20% processing loss.</span>
             </span>
           </h3>
           <p class="text-xs text-gray-600">Target: $<span id="resinTargetDisplay">2.75</span>/lb</p>
@@ -690,8 +690,12 @@
       const filmMaterialCost = (GLYCEROL_COST * GLYCEROL_USAGE_KG) + (alginateCostPerKg * ALGINATE_USAGE_KG);
       const filmCOG = filmMaterialCost / KG_TO_LB;
 
-      // Calculate Resin COG (blended)
-      const resinCOG = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
+      // Calculate Resin COG (HoldFast)
+      // Resin = 60% glycerin + 40% blended alginate input
+      // The blended input = (macro% × alginate COG) + (micro% × microalgae cost)
+      const blendedInputCost = (macroBlend * alginateCOG) + (microBlend * microalgaeCost);
+      const glycerinCostPerLb = GLYCEROL_COST / KG_TO_LB; // Convert glycerin cost to $/lb
+      const resinCOG = (0.6 * glycerinCostPerLb) + (0.4 * blendedInputCost);
 
       // Calculate waste volumes
       const wastePerBatch = SEAWEED_INPUT_BATCH * (1 - alginateYield);
