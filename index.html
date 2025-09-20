@@ -308,6 +308,26 @@
             </div>
           </div>
         </div>
+        <!-- Global Slider Range Controls -->
+<div class="mt-6">
+  <h3 class="font-semibold mb-3">Global slider range</h3>
+
+  <div class="flex items-center gap-3 mb-2">
+    <label class="text-sm w-40">Min scale factor</label>
+    <input type="number" id="minScale" value="1" step="0.1" class="px-2 py-1 border rounded">
+  </div>
+
+  <div class="flex items-center gap-3 mb-2">
+    <label class="text-sm w-40">Max scale factor</label>
+    <input type="number" id="maxScale" value="1" step="0.1" class="px-2 py-1 border rounded">
+  </div>
+
+  <button id="applySliderRanges" class="bg-blue-600 text-white px-4 py-2 rounded">
+    Apply slider ranges
+  </button>
+
+  <p class="help-text mt-2">Example: Min 0.5 and Max 0.8 will shrink all sliders to 50%–80% of the original range.</p>
+</div>
         <button id="applyConfig" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded">Apply Config</button>
       </div>
     </div>
@@ -488,7 +508,66 @@
         });
       }
     }
+// Global slider range logic
+const defaultBounds = {
+  seaweedPrice:   { min: 4, max: 15, unit: '$' },
+  alginateYield:  { min: 8, max: 20, unit: '%' },
+  ethanolRecovery:{ min: 0, max: 95, unit: '%' },
+  microalgaeCost: { min: 0.5, max: 5, unit: '$' },
+  macroBlend:     { min: 0, max: 100, unit: '%' },
+  filmVolume:     { min: 0, max: 100000, unit: '' },
+  filmPrice:      { min: 5, max: 20, unit: '$' },
+  resinVolume:    { min: 0, max: 2000000, unit: '' },
+  resinPrice:     { min: 2, max: 5, unit: '$' },
+  wastePrice:     { min: 0, max: 15, unit: '$' }
+};
 
+function applySliderBoundsFromScales() {
+  const minScale = parseFloat(document.getElementById('minScale').value) || 1;
+  const maxScale = parseFloat(document.getElementById('maxScale').value) || 1;
+
+  Object.entries(defaultBounds).forEach(([id, b]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const newMin = b.min * minScale;
+    const newMax = b.max * maxScale;
+
+    el.min = newMin;
+    el.max = newMax;
+
+    // Clamp current value
+    const cur = parseFloat(el.value);
+    if (cur < newMin) el.value = newMin;
+    if (cur > newMax) el.value = newMax;
+
+    // Update left/right labels above each slider
+    const row = el.previousElementSibling;
+    if (row && row.children.length >= 3) {
+      const left = row.children[0];
+      const right = row.children[2];
+
+      const step = parseFloat(el.step) || 1;
+      const decimals = (step.toString().split('.')[1] || '').length;
+      const fmt = n => (id.includes('Volume') ? Math.round(n).toLocaleString() : n.toFixed(decimals));
+
+      if (b.unit === '$') {
+        left.textContent = `$${fmt(newMin)}`;
+        right.textContent = `$${fmt(newMax)}`;
+      } else if (b.unit === '%') {
+        left.textContent = `${fmt(newMin)}%`;
+        right.textContent = `${fmt(newMax)}%`;
+      } else {
+        left.textContent = fmt(newMin);
+        right.textContent = fmt(newMax);
+      }
+    }
+  });
+
+  calculate();
+}
+
+document.getElementById('applySliderRanges')?.addEventListener('click', applySliderBoundsFromScales);
     // Apply config
     document.getElementById('applyConfig').addEventListener('click', function() {
       const rnd = parseFloat(document.getElementById('rndExp').value);
