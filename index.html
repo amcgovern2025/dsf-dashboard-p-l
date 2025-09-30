@@ -112,7 +112,7 @@
           <h3 class="text-lg font-semibold mb-2">DirigoDrip Film COG</h3>
           <p class="text-xs text-gray-600">Target: $8/lb</p>
           <p class="text-3xl font-bold text-green-600 mt-2">$<span id="filmCOG">0.00</span>/lb</p>
-          <p class="help-text mt-3">40% Alginate + 60% Glycerol</p>
+          <p class="help-text mt-3">40% Alginate (95% 3rd party @ $22/lb, 5% Dirigo) + 60% Glycerol</p>
         </div>
 
         <div class="output-container rounded-lg p-6">
@@ -343,6 +343,8 @@
     const GLYCEROL = 1.03;
     const GLYCEROL_KG = 0.6;
     const ALGINATE_KG = 0.4;
+    const THIRD_PARTY_ALGINATE = 22;
+    const DIRIGO_ALGINATE_SHARE = 0.05;
     const KG_LB = 2.20462;
     
     let revenueChart = null;
@@ -409,7 +411,9 @@
       const alginateLbs = 6 * alginateYield;
       const alginateCOG = totalCost / Math.max(alginateLbs, 0.01);
       
-      const algKg = alginateCOG * KG_LB;
+      const blendedAlginateCOG = (DIRIGO_ALGINATE_SHARE * alginateCOG) +
+        ((1 - DIRIGO_ALGINATE_SHARE) * THIRD_PARTY_ALGINATE);
+      const algKg = blendedAlginateCOG * KG_LB;
       const filmMat = (GLYCEROL * GLYCEROL_KG) + (algKg * ALGINATE_KG);
       const filmCOG = filmMat / KG_LB;
       
